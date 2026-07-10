@@ -39,12 +39,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,6 +73,7 @@ import com.resolum.intiva.features.finances.presentation.spendinglimits.componen
 import com.resolum.intiva.features.finances.presentation.transactions.TransactionViewModel
 import com.resolum.intiva.features.finances.presentation.transactions.components.TransactionItem
 import com.resolum.intiva.features.paymentmethodsandcategories.presentation.category.CategoryViewModel
+import com.resolum.intiva.features.paymentmethodsandcategories.presentation.financialaccount.FinancialAccountViewModel
 import com.resolum.intiva.features.profiles.domain.models.FirstTransactionTutorialStep
 import com.resolum.intiva.features.profiles.presentation.onboarding.OnboardingViewModel
 import com.resolum.intiva.features.profiles.presentation.onboarding.components.FirstTransactionPresentationOverlay
@@ -103,6 +108,7 @@ fun HomeScreen(
     spendingLimitViewModel: SpendingLimitViewModel = hiltViewModel(),
     categoryViewModel: CategoryViewModel = hiltViewModel(),
     profileViewModel: ProfileViewModel = hiltViewModel(),
+    financialAccountViewModel: FinancialAccountViewModel = hiltViewModel(),
     onNavigateToTransactions: () -> Unit,
     onNavigateToSpendingLimitAlert: () -> Unit = {},
     onNavigateToTransactionDetail: (Long) -> Unit = {}
@@ -112,6 +118,7 @@ fun HomeScreen(
     val spendingLimitUiState by spendingLimitViewModel.uiState.collectAsState()
     val categoryUiState by categoryViewModel.uiState.collectAsState()
     val profileUiState by profileViewModel.uiState.collectAsState()
+    val financialAccountUiState by financialAccountViewModel.uiState.collectAsState()
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
     val onboardingState by onboardingViewModel.state.collectAsState()
     var incomeButtonRect by remember { mutableStateOf<Rect?>(null) }
@@ -141,6 +148,17 @@ fun HomeScreen(
                 )
             )
         }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                financialAccountViewModel.getFinancialAccounts()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(onboardingState.step) {
@@ -247,7 +265,7 @@ fun HomeScreen(
                             Row(verticalAlignment = Alignment.Bottom) {
                                 Text(text = "S/ ", fontSize = 20.sp, color = Color.White)
                                 Text(
-                                    text = "12,400.00",
+                                    text = String.format("%,.2f", financialAccountViewModel.totalBalance),
                                     fontSize = 32.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
