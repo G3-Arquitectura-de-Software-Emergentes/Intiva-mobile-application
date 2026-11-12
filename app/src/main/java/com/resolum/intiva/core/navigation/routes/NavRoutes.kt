@@ -5,6 +5,7 @@ package com.resolum.intiva.core.navigation.routes
  */
 object NavRoutes {
     const val HOME                        = "home"
+    const val MONTHLY_PLAN = "monthly_plan"
     const val TRANSACTIONS                = "transactions"
     const val TRANSACTION_DETAIL          = "transaction_detail/{transactionId}"
     const val SPENDING_LIMIT_ALERT        = "spending_limit_alert"

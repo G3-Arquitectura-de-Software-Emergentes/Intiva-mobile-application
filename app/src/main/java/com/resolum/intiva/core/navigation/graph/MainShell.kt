@@ -1,5 +1,6 @@
 package com.resolum.intiva.core.navigation.graph
 
+import com.resolum.intiva.features.agent.presentation.PlanScreen
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -95,6 +96,10 @@ fun MainShell(
                         shellNavController.navigate(NavRoutes.transactionDetail(transactionId))
                     },
                 )
+            }
+
+            composable(NavRoutes.MONTHLY_PLAN) {
+                PlanScreen(onBack = { shellNavController.popBackStack() })
             }
 
             composable(NavRoutes.TRANSACTIONS) {

@@ -179,7 +179,11 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        val profile = (profileUiState.profileState as? UiState.Success)?.data
+                        androidx.compose.material3.OutlinedButton(
+                        onClick = { navController.navigate(com.resolum.intiva.core.navigation.routes.NavRoutes.MONTHLY_PLAN) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Agente · Plan mensual") }
+                    val profile = (profileUiState.profileState as? UiState.Success)?.data
                         val avatarUrl = profile?.avatarUrl?.ifEmpty { null }
                         AsyncImage(
                             model = avatarUrl ?: "https://res.cloudinary.com/dcppsmlzd/image/upload/v1781121388/avatar_default_kf0yvc.png",
