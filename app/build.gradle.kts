@@ -1,3 +1,4 @@
+import java.net.URI
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 
@@ -17,6 +18,21 @@ plugins {
 
     // Firebase plugin for using Firebase services in the app
     id("com.google.firebase.appdistribution")
+}
+
+val debugGateway = providers.gradleProperty("intivaDebugGateway")
+    .orElse("http://10.0.2.2:8080/api/v1/").get()
+val releaseGateway = providers.gradleProperty("intivaGateway")
+    .orElse(providers.environmentVariable("INTIVA_GATEWAY_URL"))
+    .orElse("https://intiva.invalid/api/v1/").get()
+
+fun gatewayLiteral(value: String, httpsOnly: Boolean): String {
+    val uri = URI.create(value)
+    require(uri.host != null && uri.userInfo == null && uri.query == null && uri.fragment == null &&
+        uri.path == "/api/v1/" && (uri.scheme == "https" || !httpsOnly && uri.scheme == "http")) {
+        "Gateway URL must end in /api/v1/; release requires HTTPS."
+    }
+    return "\"$value\""
 }
 
 android {
@@ -48,7 +64,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/v1/\"")
+            buildConfigField("String", "BASE_URL", gatewayLiteral(debugGateway, false))
         }
         create("docker") {
             initWith(getByName("debug"))
@@ -56,7 +72,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"http://10.0.2.2/api/v1/\""
+                gatewayLiteral(debugGateway, false)
             )
 
             matchingFallbacks += listOf("debug")
@@ -69,7 +85,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "BASE_URL", "\"http://20.124.135.239/api/v1/\"")
+            buildConfigField("String", "BASE_URL", gatewayLiteral(releaseGateway, true))
 
             firebaseAppDistribution {
                 // Specifices the release notes file.

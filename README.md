@@ -44,3 +44,8 @@ The project includes basic documentation and is available in the `docs` folder. 
 
 - C4 Model Software Architecture Diagrams: includes context, container and component level diagrams to provide an overview of the system architecture and its components.
 - Class Diagrams: includes class diagrams to illustrate the structure of the codebase and the relationships between classes.
+## PoC: plan mensual con IA
+
+La app consume las rutas de la PoC a través del Gateway. En el emulador, el build debug usa `http://10.0.2.2:8080/api/v1/`. Se puede cambiar por `-PintivaDebugGateway=...`; para release configurar `-PintivaGateway=https://.../api/v1/` o la variable de entorno `INTIVA_GATEWAY_URL`. Firebase App Distribution toma el valor de la variable del repositorio del mismo nombre.
+
+En Inicio, abrir **Agente · Plan mensual**. La app distingue borrador, aplicación, confirmación y error. El botón de consulta recupera el estado y el aviso del plan. En el formulario de gastos personales, **Sugerir categoría con IA** ofrece una categoría que se puede aceptar o cambiar; el botón de guardar sigue siendo la única acción que registra el movimiento.

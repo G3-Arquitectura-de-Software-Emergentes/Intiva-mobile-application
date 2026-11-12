@@ -116,7 +116,11 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease
+        env:
+          INTIVA_GATEWAY_URL: ${{ vars.INTIVA_GATEWAY_URL }}
+        run: |
+          test -n "$INTIVA_GATEWAY_URL"
+          ./gradlew assembleRelease
 
       - name: Upload release to Firebase App Distribution
         env:
