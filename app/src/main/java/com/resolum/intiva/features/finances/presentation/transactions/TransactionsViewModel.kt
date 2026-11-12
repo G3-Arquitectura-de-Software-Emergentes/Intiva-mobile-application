@@ -66,7 +66,8 @@ class TransactionViewModel @Inject constructor(
         category: Category?,
         account: FinancialAccount?,
         transactionType: TransactionType,
-        ownerType: String
+        ownerType: String,
+        description: String = ""
     ) {
         if (_uiState.value.state is UiState.Loading) return
 
@@ -125,7 +126,7 @@ class TransactionViewModel @Inject constructor(
         val request = RegisterTransactionRequest(
             amount = amountBigDecimal,
             currencyCode = "PEN",
-            description = category.name,
+            description = description.trim().ifEmpty { category.name },
             financialAccountId = account.id,
             transactionType = transactionType,
             categoryId = category.id,

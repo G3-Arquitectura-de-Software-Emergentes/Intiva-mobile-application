@@ -1,5 +1,9 @@
 package com.resolum.intiva.features.finances.presentation.transactions
 
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
+import com.resolum.intiva.features.agent.presentation.CategorySuggestionViewModel
+import com.resolum.intiva.features.paymentmethodsandcategories.presentation.category.CategoryViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -82,6 +86,11 @@ fun TransactionFormScreen(
     viewModel: TransactionViewModel = hiltViewModel(),
     onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
+    val suggestionModel: CategorySuggestionViewModel = hiltViewModel()
+    val categoryModel: CategoryViewModel = hiltViewModel()
+    val suggestion by suggestionModel.state.collectAsState()
+    val categoryState by categoryModel.uiState.collectAsState()
+    var description by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("0") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var selectedAccount by remember { mutableStateOf<FinancialAccount?>(null) }
@@ -248,6 +257,24 @@ fun TransactionFormScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp, vertical = 20.dp)
                 ) {
+                    if (transactionType == TransactionType.EXPENSE && ownerType == OwnerType.INDIVIDUAL && !isOnboardingActive) {
+                        OutlinedTextField(description, { description = it.take(180); suggestionModel.clear() },
+                            label = { Text("Descripción del gasto") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                        val value = amountToSend.toBigDecimalOrNull()
+                        OutlinedButton(
+                            onClick = { value?.let { suggestionModel.suggest(description, it) } },
+                            enabled = !suggestion.busy && description.isNotBlank() && value != null && value.signum() > 0
+                        ) { Text(if (suggestion.busy) "Buscando sugerencia…" else "Sugerir categoría con IA") }
+                        val proposed = categoryState.categories.find { it.id == suggestion.result?.categoryId && it.isActive }
+                        if (proposed != null) {
+                            Text("Sugerencia: ${proposed.name}. El gasto aún no se ha guardado.")
+                            OutlinedButton(onClick = { selectedCategory = proposed; suggestionModel.clear() }) {
+                                Text("Usar esta categoría")
+                            }
+                        } else if (suggestion.unavailable || suggestion.result != null) {
+                            Text("No hay una sugerencia disponible. Puedes elegir una categoría abajo.")
+                        }
+                    }
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -257,8 +284,10 @@ fun TransactionFormScreen(
                     ) {
                         CategoryGrid(
                             selectedCategory = selectedCategory,
+                            viewModel = categoryModel,
                             onCategorySelected = { category ->
                                 selectedCategory = category
+                                suggestionModel.clear()
                                 if (onboardingState.step == FirstTransactionTutorialStep.SELECT_CATEGORY) {
                                     showLocalEnterAmountStep = true
                                 }
@@ -281,12 +310,15 @@ fun TransactionFormScreen(
                         NumPad(
                             onNumberClick = { digit ->
                                 amountText = appendDigit(amountText, digit)
+                                suggestionModel.clear()
                             },
                             onDecimalClick = {
                                 if (!amountText.contains(".")) amountText = "$amountText."
+                                suggestionModel.clear()
                             },
                             onDeleteClick = {
                                 amountText = deleteDigit(amountText)
+                                suggestionModel.clear()
                             }
                         )
                     }
@@ -311,7 +343,8 @@ fun TransactionFormScreen(
                                         category = selectedCategory,
                                         account = selectedAccount,
                                         transactionType = transactionType,
-                                        ownerType = ownerType.name
+                                        ownerType = ownerType.name,
+                                        description = description
                                     )
                                 }
                             }
