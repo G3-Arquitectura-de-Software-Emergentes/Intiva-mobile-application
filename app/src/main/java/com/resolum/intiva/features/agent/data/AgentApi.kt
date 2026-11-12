@@ -8,11 +8,15 @@ import retrofit2.http.*
 data class SuggestRequest(val description: String, val amount: BigDecimal, val currency: String = "PEN")
 data class Suggestion(val status: String, val categoryId: Long?, val label: String?)
 data class GeneratePlan(val month: String)
-data class EditPlan(val version: Int, val proposedLimit: BigDecimal)
+data class EditPlan(
+    val version: Int, val proposedLimit: BigDecimal, val goalId: Long?, val contribution: BigDecimal?,
+    val reminderDate: String?, val reminderLabel: String?
+)
+data class PlanningGoal(val id: Long, val label: String)
 data class ApprovePlan(val version: Int)
 data class PlanAction(
     val id: String, val type: String, val categoryId: Long, val label: String,
-    val currentLimit: BigDecimal?, val projectedExpense: BigDecimal, val proposedLimit: BigDecimal,
+    val currentLimit: BigDecimal?, val projectedExpense: BigDecimal?, val proposedLimit: BigDecimal?,
     val currency: String, val status: String
 )
 data class MonthlyPlan(
@@ -25,6 +29,7 @@ data class PlanNotice(val id: String, val planId: String, val message: String)
 
 interface AgentApi {
     @POST("category-suggestions") suspend fun suggest(@Body data: SuggestRequest): Suggestion
+    @GET("planning-goals") suspend fun goals(): List<PlanningGoal>
     @GET("financial-insights") suspend fun insights(@Query("month") month: String): FinancialInsights
     @POST("monthly-plans") suspend fun generate(@Body data: GeneratePlan): MonthlyPlan
     @PATCH("monthly-plans/{id}") suspend fun edit(@Path("id") id: String, @Body data: EditPlan): MonthlyPlan

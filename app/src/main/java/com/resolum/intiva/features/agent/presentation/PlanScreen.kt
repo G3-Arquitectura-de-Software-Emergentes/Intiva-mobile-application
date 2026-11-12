@@ -40,17 +40,43 @@ fun PlanScreen(onBack: () -> Unit, model: PlanViewModel = hiltViewModel()) {
             Text(plan.explanation)
             plan.actions.forEach { action ->
                 Text(action.label, style = MaterialTheme.typography.titleMedium)
-                Text("Gasto estimado: S/ ${action.projectedExpense}")
-                Text(action.currentLimit?.let { "Límite previo: S/ $it" } ?: "Sin límite previo en este servicio")
-                Text("Límite propuesto: S/ ${action.proposedLimit}")
-                if (action.status == "APPLIED") Text("Guardado en Finanzas")
+                when (action.type) {
+                    "SPENDING_LIMIT" -> {
+                        Text("Gasto estimado: S/ ${action.projectedExpense}")
+                        Text(action.currentLimit?.let { "Límite previo: S/ $it" } ?: "Sin límite previo")
+                        Text("Límite propuesto: S/ ${action.proposedLimit}")
+                    }
+                    "PLANNED_CONTRIBUTION" -> Text("Aporte previsto: S/ ${action.proposedLimit}. No mueve dinero.")
+                }
+                Text(when (action.status) {
+                    "APPLIED" -> "Aplicado"
+                    "PENDING" -> "Pendiente"
+                    else -> "Propuesto"
+                })
             }
             if (plan.status == "DRAFT") {
                 OutlinedTextField(state.draftAmount, model::amount, label = { Text("Nuevo límite (S/)") },
                     enabled = !state.busy, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
-                OutlinedButton(model::edit, enabled = !state.busy) { Text("Guardar cambio en borrador") }
-                Button(model::approve, enabled = !state.busy) { Text("Aprobar y aplicar límite") }
+                Text("Aporte y recordatorio (opcionales)", style = MaterialTheme.typography.titleMedium)
+                OutlinedButton(model::loadGoals, enabled = !state.busy) { Text("Cargar mis metas") }
+                state.goals.forEach { goal ->
+                    FilterChip(selected = state.selectedGoal == goal.id,
+                        onClick = { model.selectGoal(if (state.selectedGoal == goal.id) null else goal.id) },
+                        label = { Text(goal.label) }, enabled = !state.busy)
+                }
+                if (state.selectedGoal != null) {
+                    OutlinedTextField(state.contribution, model::contribution, label = { Text("Aporte previsto (S/)") },
+                        enabled = !state.busy, singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+                    TextButton(onClick = { model.selectGoal(null) }, enabled = !state.busy) { Text("Quitar aporte") }
+                }
+                OutlinedTextField(state.reminderDate, model::reminderDate, label = { Text("Fecha (AAAA-MM-DD)") },
+                    enabled = !state.busy, singleLine = true)
+                OutlinedTextField(state.reminderLabel, model::reminderLabel, label = { Text("Pago que quieres recordar") },
+                    enabled = !state.busy, singleLine = true)
+                OutlinedButton(model::edit, enabled = !state.busy) { Text("Guardar cambios en borrador") }
+                Button(model::approve, enabled = !state.busy) { Text("Aprobar y aplicar plan") }
             }
             if (plan.status == "FAILED" || plan.status == "APPLYING") {
                 OutlinedButton(model::approve, enabled = !state.busy) { Text("Reintentar aplicación") }

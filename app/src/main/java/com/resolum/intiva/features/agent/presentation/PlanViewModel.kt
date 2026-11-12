@@ -22,6 +22,12 @@ data class PlanUiState(
     val notices: List<PlanNotice> = emptyList(),
     val insights: FinancialInsights? = null,
     val draftAmount: String = "",
+    val goals: List<PlanningGoal> = emptyList(),
+    val selectedGoal: Long? = null,
+    val contribution: String = "",
+    val reminderDate: String = "",
+    val reminderLabel: String = "",
+    val extrasEdited: Boolean = false,
     val busy: Boolean = false,
     val error: String? = null
 )
@@ -40,6 +46,12 @@ class PlanViewModel @Inject constructor(
     fun month(value: String) = _state.update { it.copy(month = value.take(7)) }
     fun insightMonth(value: String) = _state.update { it.copy(insightMonth = value.take(7)) }
     fun amount(value: String) = _state.update { it.copy(draftAmount = value.take(12)) }
+    fun loadGoals() = call { val goals = api.goals(); _state.update { it.copy(goals = goals) } }
+    fun selectGoal(id: Long?) = _state.update { it.copy(selectedGoal = id, extrasEdited = true,
+        contribution = if (id == null) "" else it.contribution) }
+    fun contribution(value: String) = _state.update { it.copy(contribution = value.take(12), extrasEdited = true) }
+    fun reminderDate(value: String) = _state.update { it.copy(reminderDate = value.take(10), extrasEdited = true) }
+    fun reminderLabel(value: String) = _state.update { it.copy(reminderLabel = value.take(120), extrasEdited = true) }
     fun generate() = call { accept(api.generate(GeneratePlan(state.value.month))) }
     fun insights() = call {
         val result = api.insights(state.value.insightMonth)
@@ -48,12 +60,23 @@ class PlanViewModel @Inject constructor(
     fun edit() = call {
         val view = state.value.plan ?: return@call
         val amount = parseAmount() ?: return@call fail("Escribe un monto positivo con hasta dos decimales.")
-        accept(api.edit(view.id, EditPlan(view.version, amount)))
+        val form = state.value
+        val contribution = form.contribution.replace(',', '.').toBigDecimalOrNull()
+        if (form.selectedGoal != null && (contribution == null || contribution.signum() <= 0))
+            return@call fail("Escribe un aporte positivo para la meta.")
+        if (form.reminderDate.isBlank() != form.reminderLabel.isBlank())
+            return@call fail("Completa la fecha y el nombre del recordatorio.")
+        if (form.reminderDate.isNotBlank() && runCatching {
+                YearMonth.from(java.time.LocalDate.parse(form.reminderDate)).toString()
+            }.getOrNull() != view.month) return@call fail("La fecha debe pertenecer al mes del plan (AAAA-MM-DD).")
+        accept(api.edit(view.id, EditPlan(view.version, amount, form.selectedGoal,
+            contribution.takeIf { form.selectedGoal != null }, form.reminderDate.ifBlank { null },
+            form.reminderLabel.trim().ifBlank { null })))
     }
     fun approve() = call {
         val view = state.value.plan ?: return@call
         val proposed = view.actions.firstOrNull()?.proposedLimit ?: return@call
-        if (parseAmount()?.compareTo(proposed) != 0) return@call fail("Guarda el cambio antes de aprobar.")
+        if (state.value.extrasEdited || parseAmount()?.compareTo(proposed) != 0) return@call fail("Guarda el cambio antes de aprobar.")
         accept(api.approve(view.id, ApprovePlan(view.version)))
     }
     fun refresh() = call {
@@ -67,7 +90,12 @@ class PlanViewModel @Inject constructor(
     private fun accept(view: MonthlyPlan) {
         savedState["planId"] = view.id
         _state.update { it.copy(plan = view, notices = it.notices.filter { n -> n.planId == view.id },
-            draftAmount = view.actions.firstOrNull()?.proposedLimit?.toPlainString().orEmpty()) }
+            draftAmount = view.actions.firstOrNull()?.proposedLimit?.toPlainString().orEmpty(),
+            selectedGoal = view.actions.find { a -> a.id == "contribution" }?.categoryId,
+            contribution = view.actions.find { a -> a.id == "contribution" }?.proposedLimit?.toPlainString().orEmpty(),
+            reminderDate = view.actions.find { a -> a.id == "reminder" }?.label?.substringBefore(" · ").orEmpty(),
+            reminderLabel = view.actions.find { a -> a.id == "reminder" }?.label?.substringAfter(" · ").orEmpty(),
+            extrasEdited = false) }
     }
     private fun fail(message: String) { _state.update { it.copy(error = message) } }
     private fun call(block: suspend () -> Unit) {
