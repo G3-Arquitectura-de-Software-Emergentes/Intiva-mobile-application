@@ -23,8 +23,10 @@ data class MonthlyPlan(
     val id: String, val version: Int, val month: String, val status: String,
     val explanation: String, val actions: List<PlanAction>
 )
+/** One bar of the "Gastos pequeños" card. Optional: shown only when the API sends it. */
+data class InsightCategory(val label: String, val total: BigDecimal)
 data class FinancialInsights(val period: String, val smallExpenseCount: Int,
-    val smallExpenseTotal: BigDecimal, val note: String)
+    val smallExpenseTotal: BigDecimal, val note: String, val categories: List<InsightCategory>? = null)
 data class PlanNotice(val id: String, val planId: String, val message: String)
 
 interface AgentApi {
