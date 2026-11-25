@@ -1,8 +1,11 @@
 package com.resolum.intiva.features.finances.presentation.transactions
 
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.rememberCoroutineScope
+import com.resolum.intiva.core.ui.snackbar.SnackBarType
+import com.resolum.intiva.core.ui.snackbar.SnackBarVisualsWithType
 import com.resolum.intiva.features.agent.presentation.CategorySuggestionViewModel
+import com.resolum.intiva.features.agent.presentation.components.AiCategorySuggestion
+import kotlinx.coroutines.launch
 import com.resolum.intiva.features.paymentmethodsandcategories.presentation.category.CategoryViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -96,6 +99,7 @@ fun TransactionFormScreen(
     var selectedAccount by remember { mutableStateOf<FinancialAccount?>(null) }
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     var saveButtonRect by remember { mutableStateOf<Rect?>(null) }
     var categoryRect by remember { mutableStateOf<Rect?>(null) }
@@ -258,22 +262,27 @@ fun TransactionFormScreen(
                         .padding(horizontal = 16.dp, vertical = 20.dp)
                 ) {
                     if (transactionType == TransactionType.EXPENSE && ownerType == OwnerType.INDIVIDUAL && !isOnboardingActive) {
-                        OutlinedTextField(description, { description = it.take(180); suggestionModel.clear() },
-                            label = { Text("Descripción del gasto") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                         val value = amountToSend.toBigDecimalOrNull()
-                        OutlinedButton(
-                            onClick = { value?.let { suggestionModel.suggest(description, it) } },
-                            enabled = !suggestion.busy && description.isNotBlank() && value != null && value.signum() > 0
-                        ) { Text(if (suggestion.busy) "Buscando sugerencia…" else "Sugerir categoría con IA") }
                         val proposed = categoryState.categories.find { it.id == suggestion.result?.categoryId && it.isActive }
-                        if (proposed != null) {
-                            Text("Sugerencia: ${proposed.name}. El gasto aún no se ha guardado.")
-                            OutlinedButton(onClick = { selectedCategory = proposed; suggestionModel.clear() }) {
-                                Text("Usar esta categoría")
-                            }
-                        } else if (suggestion.unavailable || suggestion.result != null) {
-                            Text("No hay una sugerencia disponible. Puedes elegir una categoría abajo.")
-                        }
+                        AiCategorySuggestion(
+                            description = description,
+                            onDescriptionChange = { description = it.take(180); suggestionModel.clear() },
+                            canSuggest = description.isNotBlank() && value != null && value.signum() > 0,
+                            busy = suggestion.busy,
+                            onSuggest = { value?.let { suggestionModel.suggest(description, it) } },
+                            suggestedCategory = proposed?.name,
+                            unavailable = proposed == null && (suggestion.unavailable || suggestion.result != null),
+                            onUseSuggestion = {
+                                selectedCategory = proposed
+                                suggestionModel.clear()
+                                scope.launch {
+                                    snackBarHostState.showSnackbar(
+                                        SnackBarVisualsWithType("Categoría sugerida aplicada", SnackBarType.Success)
+                                    )
+                                }
+                            },
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
                     Box(
                         modifier = Modifier

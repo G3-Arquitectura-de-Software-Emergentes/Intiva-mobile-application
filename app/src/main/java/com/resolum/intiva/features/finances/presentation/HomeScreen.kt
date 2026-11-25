@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.resolum.intiva.core.navigation.routes.NavRoutes
+import com.resolum.intiva.features.agent.presentation.components.AgentHomeCard
 import com.resolum.intiva.core.common.state.UiState
 import com.resolum.intiva.core.ui.snackbar.IntivaSnackBarHost
 import com.resolum.intiva.core.ui.snackbar.SnackBarType
@@ -179,11 +180,7 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.material3.OutlinedButton(
-                        onClick = { navController.navigate(com.resolum.intiva.core.navigation.routes.NavRoutes.MONTHLY_PLAN) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Agente · Plan mensual") }
-                    val profile = (profileUiState.profileState as? UiState.Success)?.data
+                        val profile = (profileUiState.profileState as? UiState.Success)?.data
                         val avatarUrl = profile?.avatarUrl?.ifEmpty { null }
                         AsyncImage(
                             model = avatarUrl ?: "https://res.cloudinary.com/dcppsmlzd/image/upload/v1781121388/avatar_default_kf0yvc.png",
@@ -402,6 +399,10 @@ fun HomeScreen(
                             onOpenAlert = onNavigateToSpendingLimitAlert
                         )
                     }
+                }
+
+                item {
+                    AgentHomeCard(onClick = { navController.navigate(NavRoutes.MONTHLY_PLAN) })
                 }
 
                 item {
