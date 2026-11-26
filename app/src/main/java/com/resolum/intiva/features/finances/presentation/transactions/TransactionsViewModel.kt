@@ -67,7 +67,8 @@ class TransactionViewModel @Inject constructor(
         account: FinancialAccount?,
         transactionType: TransactionType,
         ownerType: String,
-        description: String = ""
+        description: String = "",
+        aiCategorized: Boolean = false
     ) {
         if (_uiState.value.state is UiState.Loading) return
 
@@ -130,7 +131,8 @@ class TransactionViewModel @Inject constructor(
             financialAccountId = account.id,
             transactionType = transactionType,
             categoryId = category.id,
-            ownerType = ownerType
+            ownerType = ownerType,
+            aiCategorized = aiCategorized
         )
 
         _uiState.update {

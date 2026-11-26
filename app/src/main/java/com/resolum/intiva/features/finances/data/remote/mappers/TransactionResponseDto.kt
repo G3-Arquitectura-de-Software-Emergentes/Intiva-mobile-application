@@ -26,5 +26,6 @@ fun TransactionResponseDto.toDomain(): Transaction {
         categoryId = categoryId,
         registeredAt = registeredAt,
         financialAccount = financialAccount?.toDomain(),
+        aiCategorized = aiCategorized,
     )
 }

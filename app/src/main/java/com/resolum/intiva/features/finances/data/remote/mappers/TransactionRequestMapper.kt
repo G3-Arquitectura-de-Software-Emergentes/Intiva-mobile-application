@@ -20,5 +20,6 @@ fun RegisterTransactionRequest.toDto(
         categoryId = categoryId,
         ownerType = ownerType,
         performedByUserId = performedByUserId,
+        aiCategorized = aiCategorized,
     )
 }

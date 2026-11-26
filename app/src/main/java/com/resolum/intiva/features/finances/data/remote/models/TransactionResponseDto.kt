@@ -53,4 +53,6 @@ data class TransactionResponseDto(
 
     @SerializedName(value = "financialAccount", alternate = ["account"])
     val financialAccount: FinancialAccountResponseDto? = null,
+    @SerializedName("aiCategorized")
+    val aiCategorized: Boolean = false,
 )

@@ -26,4 +26,5 @@ data class TransactionWithDesignResponse(
     val categoryId: Long?,
     val registeredAt: String,
     val categoryDesign: CategoryDesign?,
+    val aiCategorized: Boolean = false,
 )

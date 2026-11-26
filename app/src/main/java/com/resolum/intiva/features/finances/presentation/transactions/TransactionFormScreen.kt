@@ -94,6 +94,7 @@ fun TransactionFormScreen(
     val suggestion by suggestionModel.state.collectAsState()
     val categoryState by categoryModel.uiState.collectAsState()
     var description by remember { mutableStateOf("") }
+    var aiCategorized by remember { mutableStateOf(false) }
     var amountText by remember { mutableStateOf("0") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var selectedAccount by remember { mutableStateOf<FinancialAccount?>(null) }
@@ -274,6 +275,7 @@ fun TransactionFormScreen(
                             unavailable = proposed == null && (suggestion.unavailable || suggestion.result != null),
                             onUseSuggestion = {
                                 selectedCategory = proposed
+                                aiCategorized = proposed != null
                                 suggestionModel.clear()
                                 scope.launch {
                                     snackBarHostState.showSnackbar(
@@ -296,6 +298,7 @@ fun TransactionFormScreen(
                             viewModel = categoryModel,
                             onCategorySelected = { category ->
                                 selectedCategory = category
+                                aiCategorized = false
                                 suggestionModel.clear()
                                 if (onboardingState.step == FirstTransactionTutorialStep.SELECT_CATEGORY) {
                                     showLocalEnterAmountStep = true
@@ -353,7 +356,8 @@ fun TransactionFormScreen(
                                         account = selectedAccount,
                                         transactionType = transactionType,
                                         ownerType = ownerType.name,
-                                        description = description
+                                        description = description,
+                                        aiCategorized = aiCategorized
                                     )
                                 }
                             }

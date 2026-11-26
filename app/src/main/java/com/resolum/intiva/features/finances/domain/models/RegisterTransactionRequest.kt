@@ -20,5 +20,6 @@ data class RegisterTransactionRequest(
     val financialAccountId: Long,
     val transactionType: TransactionType,
     val categoryId: Long,
-    val ownerType: String
+    val ownerType: String,
+    val aiCategorized: Boolean = false
 )

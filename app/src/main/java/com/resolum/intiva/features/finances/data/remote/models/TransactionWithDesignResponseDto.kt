@@ -49,4 +49,6 @@ data class TransactionWithDesignResponseDto(
 
     @SerializedName("categoryDesign")
     val categoryDesign: CategoryDesignResponseDto,
+    @SerializedName("aiCategorized")
+    val aiCategorized: Boolean = false,
 )

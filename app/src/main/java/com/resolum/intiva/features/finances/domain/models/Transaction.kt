@@ -27,5 +27,6 @@ data class Transaction(
     val transactionType: String,
     val categoryId: Long?,
     val registeredAt: String? = null,
-    val financialAccount: FinancialAccount? = null
+    val financialAccount: FinancialAccount? = null,
+    val aiCategorized: Boolean = false
 )

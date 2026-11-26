@@ -45,5 +45,8 @@ data class RegisterTransactionRequestDto(
     val categoryId: Long?,
 
     @SerializedName("ownerType")
-    val ownerType: String
+    val ownerType: String,
+
+    @SerializedName("aiCategorized")
+    val aiCategorized: Boolean = false
 )

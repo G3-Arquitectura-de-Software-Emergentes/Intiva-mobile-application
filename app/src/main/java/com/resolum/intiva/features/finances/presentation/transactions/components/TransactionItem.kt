@@ -90,7 +90,7 @@ fun TransactionItem(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = transaction.description,
+                    text = transaction.description + if (transaction.aiCategorized) " (IA)" else "",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black
