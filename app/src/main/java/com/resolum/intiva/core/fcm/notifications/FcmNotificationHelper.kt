@@ -35,12 +35,13 @@ class FcmNotificationHelper @Inject constructor(
 
         val pendingIntent = PendingIntent.getActivity(
             context,
-            REQUEST_CODE_OPEN_APP,
+            data["eventId"]?.hashCode() ?: REQUEST_CODE_OPEN_APP,
             Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra(EXTRA_NOTIFICATION_TYPE, data["type"])
                 putExtra(EXTRA_SOURCE, data["source"])
                 putExtra(EXTRA_SOURCE_ID, data["sourceId"])
+                putExtra("plan_id", data["planId"])
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -56,7 +57,12 @@ class FcmNotificationHelper @Inject constructor(
             .build()
 
         try {
-            notificationManager.notify(data.notificationId(), notification)
+            val eventId = data["eventId"]
+            if (eventId.isNullOrBlank()) {
+                notificationManager.notify(data.notificationId(), notification)
+            } else {
+                notificationManager.notify(eventId, 0, notification)
+            }
         } catch (exception: SecurityException) {
             Log.w(
                 FCM_NOTIFICATION_LOG_TAG,
