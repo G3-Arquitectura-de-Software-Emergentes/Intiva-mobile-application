@@ -64,6 +64,9 @@ fun SpendingLimitScreen(
         )
     } else {
         SpendingLimitListContent(
+            planLimitsState = uiState.planLimitsState,
+            planMonth = uiState.planMonth,
+            onPlanMonthChange = viewModel::loadPlanLimits,
             limitsState = uiState.spendingLimitsState,
             categories = categoryUiState.categories,
             onAddClick = { showCreate = true },

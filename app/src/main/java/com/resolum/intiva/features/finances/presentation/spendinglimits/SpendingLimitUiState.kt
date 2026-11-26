@@ -9,7 +9,9 @@ data class SpendingLimitUiState(
     val spendingLimitState: UiState<SpendingLimitSummary> = UiState.Idle,
     val spendingLimitsState: UiState<List<SpendingLimitSummary>> = UiState.Idle,
     val createState: UiState<SpendingLimit> = UiState.Idle,
-    val updateState: UiState<SpendingLimit> = UiState.Idle
+    val updateState: UiState<SpendingLimit> = UiState.Idle,
+    val planLimitsState: UiState<List<com.resolum.intiva.features.agent.data.PlanBudget>> = UiState.Idle,
+    val planMonth: String = java.time.YearMonth.now().toString()
 )
 
 data class SpendingLimitSummary(

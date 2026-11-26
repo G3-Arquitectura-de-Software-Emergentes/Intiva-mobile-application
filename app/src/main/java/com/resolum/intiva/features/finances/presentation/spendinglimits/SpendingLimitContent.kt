@@ -2,6 +2,7 @@ package com.resolum.intiva.features.finances.presentation.spendinglimits
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +24,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +47,9 @@ import com.resolum.intiva.features.paymentmethodsandcategories.domain.models.Cat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpendingLimitListContent(
+    planLimitsState: UiState<List<com.resolum.intiva.features.agent.data.PlanBudget>>,
+    planMonth: String,
+    onPlanMonthChange: (Long) -> Unit,
     limitsState: UiState<List<SpendingLimitSummary>>,
     categories: List<Category>,
     onAddClick: () -> Unit,
@@ -105,6 +112,37 @@ fun SpendingLimitListContent(
                 )
             }
 
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Presupuestos del plan mensual", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { onPlanMonthChange(-1) }) { Text("Anterior") }
+                        Text(planMonth, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { onPlanMonthChange(1) }) { Text("Siguiente") }
+                    }
+                    when (planLimitsState) {
+                        is UiState.Loading -> CircularProgressIndicator()
+                        is UiState.Success -> {
+                            if (planLimitsState.data.isEmpty()) Text("No hay límites aprobados para este mes.")
+                            planLimitsState.data.forEach { budget ->
+                                Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                        Text(budget.categoryLabel, fontWeight = FontWeight.Bold)
+                                        Text("Límite aprobado: S/ ${budget.amount}")
+                                        Text("Gastos registrados: S/ ${budget.spent}")
+                                        Text("Disponible: S/ ${budget.remaining}")
+                                    }
+                                }
+                            }
+                        }
+                        is UiState.Error -> {
+                            Text(planLimitsState.message)
+                            TextButton(onClick = { onPlanMonthChange(0) }) { Text("Reintentar") }
+                        }
+                        else -> Unit
+                    }
+                }
+            }
             when (limitsState) {
                 is UiState.Loading -> item {
                     Box(

@@ -30,7 +30,8 @@ class SpendingLimitViewModel @Inject constructor(
     private val createSpendingLimitUseCase: CreateSpendingLimitUseCase,
     private val updateSpendingLimitAmountUseCase: UpdateSpendingLimitAmountUseCase,
     private val updateSpendingLimitPeriodUseCase: UpdateSpendingLimitPeriodUseCase,
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val agentRepository: com.resolum.intiva.features.agent.data.AgentRepository
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(SpendingLimitUiState())
@@ -86,6 +87,7 @@ class SpendingLimitViewModel @Inject constructor(
     }
 
     fun loadSpendingLimits() {
+        loadPlanLimits()
         safeLaunch {
             _uiState.update { it.copy(spendingLimitsState = UiState.Loading) }
 
@@ -126,6 +128,25 @@ class SpendingLimitViewModel @Inject constructor(
                             )
                         )
                     }
+                }
+            }
+        }
+    }
+
+    fun loadPlanLimits(offset: Long = 0) {
+        val month = java.time.YearMonth.parse(_uiState.value.planMonth).plusMonths(offset).toString()
+        _uiState.update { it.copy(planMonth = month, planLimitsState = UiState.Loading) }
+        safeLaunch {
+            try {
+                val limits = agentRepository.api.limits(month)
+                if (_uiState.value.planMonth == month) {
+                    _uiState.update { it.copy(planLimitsState = UiState.Success(limits)) }
+                }
+            } catch (exception: kotlinx.coroutines.CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                if (_uiState.value.planMonth == month) {
+                    _uiState.update { it.copy(planLimitsState = UiState.Error("No se pudieron cargar los límites del plan.")) }
                 }
             }
         }
