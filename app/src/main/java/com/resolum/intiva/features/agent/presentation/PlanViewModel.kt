@@ -22,6 +22,7 @@ data class PlanUiState(
     val notices: List<PlanNotice> = emptyList(),
     val insights: FinancialInsights? = null,
     val draftAmount: String = "",
+    val expectedIncome: String = "",
     val goals: List<PlanningGoal> = emptyList(),
     val selectedGoal: Long? = null,
     val contribution: String = "",
@@ -52,7 +53,18 @@ class PlanViewModel @Inject constructor(
     fun contribution(value: String) = _state.update { it.copy(contribution = value.take(12), extrasEdited = true) }
     fun reminderDate(value: String) = _state.update { it.copy(reminderDate = value.take(10), extrasEdited = true) }
     fun reminderLabel(value: String) = _state.update { it.copy(reminderLabel = value.take(120), extrasEdited = true) }
-    fun generate() = call { accept(api.generate(GeneratePlan(state.value.month))) }
+    fun expectedIncome(value: String) = _state.update { it.copy(expectedIncome = value.take(12)) }
+    fun generate() = call {
+        val raw = state.value.expectedIncome
+        val income = raw.replace(',', '.').toBigDecimalOrNull()
+        if (raw.isNotBlank() && (income == null || income.signum() <= 0 || income.scale() > 2))
+            return@call fail("Ingresa ingresos previstos positivos con hasta dos decimales.")
+        accept(api.generate(GeneratePlan(state.value.month, income)))
+    }
+    fun discard() = call {
+        val plan = state.value.plan ?: return@call
+        accept(api.discard(plan.id, ApprovePlan(plan.version)))
+    }
     fun insights() = call {
         val result = api.insights(state.value.insightMonth)
         _state.update { it.copy(insights = result) }

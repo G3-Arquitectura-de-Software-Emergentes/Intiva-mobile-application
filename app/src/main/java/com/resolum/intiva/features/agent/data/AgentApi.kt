@@ -7,7 +7,7 @@ import retrofit2.http.*
 
 data class SuggestRequest(val description: String, val amount: BigDecimal, val currency: String = "PEN")
 data class Suggestion(val status: String, val categoryId: Long?, val label: String?)
-data class GeneratePlan(val month: String)
+data class GeneratePlan(val month: String, val expectedIncome: BigDecimal? = null)
 data class EditPlan(
     val version: Int, val proposedLimit: BigDecimal, val goalId: Long?, val contribution: BigDecimal?,
     val reminderDate: String?, val reminderLabel: String?
@@ -21,7 +21,7 @@ data class PlanAction(
 )
 data class MonthlyPlan(
     val id: String, val version: Int, val month: String, val status: String,
-    val explanation: String, val actions: List<PlanAction>
+    val explanation: String, val actions: List<PlanAction>, val expectedIncome: BigDecimal? = null
 )
 /** One bar of the "Gastos pequeños" card. Optional: shown only when the API sends it. */
 data class InsightCategory(val label: String, val total: BigDecimal)
@@ -29,7 +29,14 @@ data class FinancialInsights(val period: String, val smallExpenseCount: Int,
     val smallExpenseTotal: BigDecimal, val note: String, val categories: List<InsightCategory>? = null)
 data class PlanNotice(val id: String, val planId: String, val message: String)
 
+data class PlanBudget(
+    val planId: String?, val month: String, val categoryId: Long, val categoryLabel: String,
+    val amount: BigDecimal, val spent: BigDecimal, val remaining: BigDecimal, val currency: String
+)
+
 interface AgentApi {
+    @GET("plan-limits") suspend fun limits(@Query("month") month: String): List<PlanBudget>
+    @POST("monthly-plans/{id}/discard") suspend fun discard(@Path("id") id: String, @Body data: ApprovePlan): MonthlyPlan
     @POST("category-suggestions") suspend fun suggest(@Body data: SuggestRequest): Suggestion
     @GET("planning-goals") suspend fun goals(): List<PlanningGoal>
     @GET("financial-insights") suspend fun insights(@Query("month") month: String): FinancialInsights

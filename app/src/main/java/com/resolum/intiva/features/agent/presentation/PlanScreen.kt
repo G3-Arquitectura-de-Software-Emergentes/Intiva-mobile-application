@@ -115,6 +115,13 @@ fun PlanScreen(onBack: () -> Unit, model: PlanViewModel = hiltViewModel()) {
             enabled = !state.busy,
             placeholder = "AAAA-MM",
         )
+        AgentTextField(
+            value = state.expectedIncome,
+            onValueChange = model::expectedIncome,
+            label = "Ingresos previstos en soles (opcional)",
+            enabled = !state.busy,
+            placeholder = "Monto que esperas recibir en el mes",
+        )
         AgentPillButton(
             text = "Generar plan",
             onClick = model::generate,
@@ -167,6 +174,7 @@ private fun PlanContent(plan: MonthlyPlan, state: PlanUiState, model: PlanViewMo
     }
 
     if (draft) {
+        AgentSecondaryButton("Descartar borrador", model::discard, enabled = !state.busy)
         DraftExtras(plan, state, model)
         AgentSecondaryButton("Guardar cambios en borrador", model::edit, enabled = !state.busy)
         AgentPrimaryButton(
@@ -191,6 +199,7 @@ private fun StatusChip(plan: MonthlyPlan) {
         "DRAFT" -> AgentChip("Borrador · versión ${plan.version}", ChipTone.Amber)
         "APPLYING" -> AgentChip("Aplicando cambios…", ChipTone.Blue)
         "ACTIVE" -> AgentChip("Plan activo", ChipTone.Green, icon = Icons.Filled.CheckCircle)
+        "DISCARDED" -> AgentChip("Plan descartado", ChipTone.Neutral)
         "FAILED" -> AgentChip("No se confirmó la aplicación", ChipTone.Red)
         else -> AgentChip(plan.status, ChipTone.Neutral)
     }
